@@ -10,7 +10,7 @@ func NewSecretsManager() SecretsManager {
 	return &EnvironmentSecretsManager{}
 }
 
-// NewStaticSecretsManager returns a secrets manager which contains passed secrets. Usefull e.g. for testing.
+// NewStaticSecretsManager returns a secrets manager which contains passed secrets. Useful e.g. for testing.
 func NewStaticSecretsManager(secrets map[string]string) SecretsManager {
 	return &StaticSecretsManager{secrets: secrets}
 }
