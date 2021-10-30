@@ -26,7 +26,7 @@ func NewSecretsManagerByConfig(conf config.Config) SecretsManager {
 
 	if managerType := conf.Get("secrets.source", nil); managerType != nil {
 		if *managerType == "docker" {
-			secretsPath := conf.Get("secretspath", config.AsStringPtr(DOCKER_SECRETS_PATH))
+			secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
 			return NewDockerecretsManager(*secretsPath)
 		}
 	}
