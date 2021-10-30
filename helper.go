@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -11,6 +12,8 @@ func ExportToEnvironment(keys []string, manager SecretsManager) {
 	for _, key := range keys {
 		if val, err := manager.Obtain(key); err == nil {
 			os.Setenv(key, *val)
+		} else {
+			log.Println(err)
 		}
 	}
 }
