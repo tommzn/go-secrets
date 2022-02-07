@@ -15,6 +15,13 @@ func NewStaticSecretsManager(secrets map[string]string) SecretsManager {
 	return &StaticSecretsManager{secrets: secrets}
 }
 
+// NewFileSecretsManager returns a new secretsmanager for given file.
+func NewFileSecretsManager(fileName string) SecretsManager {
+	return &FileSecretsManager{
+		secretsFile: fileName,
+	}
+}
+
 // NewDockerecretsManager returns a new secrets manager for Docker or K8s.
 func NewDockerecretsManager(secretsPath string) SecretsManager {
 	return &DockerSecretsManager{secretsPath: secretsPath}
