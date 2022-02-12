@@ -25,7 +25,7 @@ func (s *DockerSecretsManager) Obtain(key string) (*string, error) {
 			return &secretStr, nil
 		}
 	}
-	return nil, newSecretNotFoundError(key)
+	return nil, asSecretNotFoundError(key)
 }
 
 // generateSecretFilePath creates the path to a mounted secrets file.

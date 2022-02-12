@@ -34,12 +34,13 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 		secretsKey, secretsValue := splitCredentials(line)
 		if assertKeyIsEqual(key, secretsKey) {
 			if decoded, err := base64.StdEncoding.DecodeString(secretsValue); err == nil {
-				decodedSecretsValue := string(decoded)
-				return &decodedSecretsValue, nil
+				return byteSliceAsStringPtr(decoded), nil
+			} else {
+				return nil, asBase64DecodeErrorr(err)
 			}
 		}
 	}
-	return nil, newSecretNotFoundError(key)
+	return nil, asSecretNotFoundError(key)
 }
 
 func splitCredentials(line string) (string, string) {

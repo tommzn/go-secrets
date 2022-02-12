@@ -1,7 +1,6 @@
 package secrets
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -18,11 +17,6 @@ func ExportToEnvironment(keys []string, manager SecretsManager) {
 	}
 }
 
-// newSecretNotFoundError is a helper to provide same error for not existing secrets accros all secret sources.
-func newSecretNotFoundError(key string) error {
-	return fmt.Errorf("Secret not found: %s", key)
-}
-
 // generateSecretKeys will create a slice of keys. This includes the passed key and a lower and upper case version of it.
 func generateSecretKeys(key string) []string {
 
@@ -36,4 +30,14 @@ func generateSecretKeys(key string) []string {
 		keys = append(keys, upperKey)
 	}
 	return keys
+}
+
+// byteSliceAsStringPtr returns passed byte slice as string point.
+// If byte slice is empty nil will be retunred.
+func byteSliceAsStringPtr(byteSlice []byte) *string {
+	if len(byteSlice) == 0 {
+		return nil
+	}
+	stringValue := string(byteSlice)
+	return &stringValue
 }

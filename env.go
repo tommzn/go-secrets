@@ -15,5 +15,5 @@ func (s *EnvironmentSecretsManager) Obtain(key string) (*string, error) {
 			return &secret, nil
 		}
 	}
-	return nil, newSecretNotFoundError(key)
+	return nil, asSecretNotFoundError(key)
 }

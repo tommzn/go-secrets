@@ -26,6 +26,12 @@ func (suite *FileSecretsManagerTestSuite) TestObtainSecrets() {
 	secret2, err2 := secretsmanager.Obtain("yxz")
 	suite.NotNil(err2)
 	suite.Nil(secret2)
+
+	// value for AWS_SECRET_ACCESS_KEY cintains a space suffix which leads to base64 decode error
+	secret3, err3 := secretsmanager.Obtain("AWS_SECRET_ACCESS_KEY")
+	suite.NotNil(err3)
+	suite.IsType(&Base64DecodeError{}, err3)
+	suite.Nil(secret3)
 }
 
 func (suite *FileSecretsManagerTestSuite) TestWithMissingFile() {
