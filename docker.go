@@ -19,7 +19,6 @@ func (s *DockerSecretsManager) Obtain(key string) (*string, error) {
 	keys := generateSecretKeys(key)
 	for _, currentKey := range keys {
 		fullPath := generateSecretFilePath(s.secretsPath, currentKey)
-		fmt.Println(fullPath)
 		if secret, err := ioutil.ReadFile(fullPath); err == nil {
 			secretStr := string(secret)
 			return &secretStr, nil
