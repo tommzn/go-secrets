@@ -2,10 +2,14 @@
 package secrets
 
 import (
+	"os/user"
+	"path/filepath"
+	"strings"
+
 	config "github.com/tommzn/go-config"
 )
 
-// NewSecretsManager returns a new default secrets mananger, which will read secrets from environment variables.
+// NewSecretsManager returns a new default secrets manager, which will read secrets from environment variables.
 func NewSecretsManager() SecretsManager {
 	return &EnvironmentSecretsManager{}
 }
@@ -15,11 +19,22 @@ func NewStaticSecretsManager(secrets map[string]string) SecretsManager {
 	return &StaticSecretsManager{secrets: secrets}
 }
 
-// NewFileSecretsManager returns a new secretsmanager for given file.
+// NewFileSecretsManager returns a new secrets manager for the given credentials file.
+// A leading ~/ in the path is expanded to the current user's home directory.
 func NewFileSecretsManager(fileName string) SecretsManager {
 	return &FileSecretsManager{
-		secretsFile: fileName,
+		secretsFile: expandHome(fileName),
 	}
+}
+
+// expandHome replaces a leading ~ with the current user's home directory.
+func expandHome(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		if usr, err := user.Current(); err == nil {
+			return filepath.Join(usr.HomeDir, path[2:])
+		}
+	}
+	return path
 }
 
 // NewDockerecretsManager returns a new secrets manager for Docker or K8s.
@@ -34,6 +49,9 @@ func NewSecretsManagerByConfig(conf config.Config) SecretsManager {
 	if managerType := conf.Get("secrets.source", nil); managerType != nil {
 		if *managerType == "docker" {
 			secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
+			if secretsPath == nil {
+				return NewDockerecretsManager(DOCKER_SECRETS_PATH)
+			}
 			return NewDockerecretsManager(*secretsPath)
 		}
 	}

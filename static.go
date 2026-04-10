@@ -18,3 +18,10 @@ func (s *StaticSecretsManager) Obtain(key string) (*string, error) {
 	}
 	return nil, asSecretNotFoundError(key)
 }
+
+// Clear removes all secrets from the internal map to minimize secret lifetime in memory.
+func (s *StaticSecretsManager) Clear() {
+	for k := range s.secrets {
+		delete(s.secrets, k)
+	}
+}

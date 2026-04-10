@@ -1,30 +1,17 @@
 package secrets
 
+// SecretNotFoundError is returned when a requested secret key does not exist
+// in the underlying secrets source.
 type SecretNotFoundError struct {
 	key string
 }
 
+// Error implements the error interface.
 func (e *SecretNotFoundError) Error() string {
-	return "Secret not found: " + e.key
+	return "secret not found"
 }
 
-type Base64DecodeError struct {
-	msg string
-}
-
-func (e *Base64DecodeError) Error() string {
-	return e.msg
-}
-
-// asSecretNotFoundError is a helper to provide same error for not existing secrets accros all secret sources.
+// asSecretNotFoundError returns a SecretNotFoundError for the given key.
 func asSecretNotFoundError(key string) error {
 	return &SecretNotFoundError{key: key}
-}
-
-// asSecretNotFoundError is a create an error for base64 encoding failures.
-func asBase64DecodeErrorr(err error) error {
-	if err == nil {
-		return nil
-	}
-	return &Base64DecodeError{msg: err.Error()}
 }
