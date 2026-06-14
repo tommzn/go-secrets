@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - copilot/**
+      - dependabot/**
 permissions:
   contents: write
 
