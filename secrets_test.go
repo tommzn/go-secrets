@@ -95,6 +95,85 @@ func (suite *SecretsManagerTestSuite) TestAddToEnvironment() {
 	suite.Equal(secrets["TESTKEY"], envValue)
 }
 
+func (suite *SecretsManagerTestSuite) TestStaticSecretsManagerClear() {
+
+	secrets := map[string]string{"KEY1": "val1", "KEY2": "val2"}
+	manager := NewStaticSecretsManager(secrets).(*StaticSecretsManager)
+
+	_, err := manager.Obtain("KEY1")
+	suite.Nil(err)
+
+	manager.Clear()
+
+	_, err = manager.Obtain("KEY1")
+	suite.NotNil(err)
+	_, err = manager.Obtain("KEY2")
+	suite.NotNil(err)
+}
+
+func (suite *SecretsManagerTestSuite) TestExportToEnvironmentMissingKey() {
+
+	manager := NewStaticSecretsManager(map[string]string{})
+	suite.NotPanics(func() {
+		ExportToEnvironment([]string{"MISSING_KEY_XYZ_99"}, manager)
+	})
+	_, ok := os.LookupEnv("MISSING_KEY_XYZ_99")
+	suite.False(ok)
+}
+
+func (suite *SecretsManagerTestSuite) TestDockerSecretsManagerPathTraversal() {
+
+	manager := NewDockerecretsManager("./fixtures")
+
+	for _, key := range []string{"../secrets_test", ".", "..", "path/traversal", "back\\slash"} {
+		secret, err := manager.Obtain(key)
+		suite.NotNil(err, "expected error for key %q", key)
+		suite.Nil(secret, "expected nil secret for key %q", key)
+	}
+}
+
+func (suite *SecretsManagerTestSuite) TestByteSliceAsStringPtr() {
+
+	suite.Nil(byteSliceAsStringPtr([]byte{}))
+
+	result := byteSliceAsStringPtr([]byte("hello"))
+	suite.NotNil(result)
+	suite.Equal("hello", *result)
+}
+
+func (suite *SecretsManagerTestSuite) TestGenerateSecretKeys() {
+
+	// Mixed case produces original + lowercase + uppercase
+	keys := generateSecretKeys("MyKey")
+	suite.ElementsMatch([]string{"MyKey", "mykey", "MYKEY"}, keys)
+
+	// Already lowercase produces original + uppercase only
+	keys = generateSecretKeys("mykey")
+	suite.ElementsMatch([]string{"mykey", "MYKEY"}, keys)
+
+	// Already uppercase produces original + lowercase only
+	keys = generateSecretKeys("MYKEY")
+	suite.ElementsMatch([]string{"MYKEY", "mykey"}, keys)
+}
+
+func (suite *SecretsManagerTestSuite) TestIsValidSecretFileName() {
+
+	for _, name := range []string{"validkey", "VALID_KEY", "valid-key", "secret.txt"} {
+		suite.True(isValidSecretFileName(name), "expected valid: %q", name)
+	}
+
+	for _, name := range []string{"../secret", "path/secret", `path\secret`, ".", ".."} {
+		suite.False(isValidSecretFileName(name), "expected invalid: %q", name)
+	}
+}
+
+func (suite *SecretsManagerTestSuite) TestSecretNotFoundError() {
+
+	err := asSecretNotFoundError("somekey")
+	suite.Equal("secret not found", err.Error())
+	suite.IsType(&SecretNotFoundError{}, err)
+}
+
 func (suite *SecretsManagerTestSuite) loadConfigForTest(configFile string) config.Config {
 	configLoader := config.NewFileConfigSource(&configFile)
 	conf, err := configLoader.Load()

@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-secrets.svg)](https://pkg.go.dev/github.com/tommzn/go-secrets)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-config.svg)](https://pkg.go.dev/github.com/tommzn/go-secrets)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/tommzn/go-secrets)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tommzn/go-secrets)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-secrets)](https://goreportcard.com/report/github.com/tommzn/go-secrets)
@@ -6,18 +6,7 @@
 
 # go-secrets
 
-`go-secrets` provides a unified Go interface to read secrets from multiple backends. All backends implement the same `SecretsManager` interface, so the calling code does not need to know where a secret comes from.
-
-## Sources
-
-| Backend | Constructor | Description |
-|---|---|---|
-| Environment variables | `NewSecretsManager()` | Reads secrets from OS environment variables (default). |
-| Static / in-memory | `NewStaticSecretsManager(map)` | Holds a fixed map of secrets. Useful for tests. |
-| Credentials file | `NewFileSecretsManager(path)` | Reads `key:base64value` pairs from a credentials file. |
-| Docker / K8s mounts | `NewDockerSecretsManager(path)` | Reads secrets from files mounted by Docker or Kubernetes. |
-
-All backends perform **case-insensitive key lookup**: if a secret is not found under the exact key, the lower-case and upper-case variants are tried automatically.
+A Go library that provides a unified interface for reading secrets from multiple backends. Switch between environment variables, Docker/Kubernetes mounted secrets, and credentials files without changing application code.
 
 ## Installation
 
@@ -25,69 +14,145 @@ All backends perform **case-insensitive key lookup**: if a secret is not found u
 go get github.com/tommzn/go-secrets
 ```
 
-## Usage
+## Backends
 
-### Environment variables (default)
+| Backend | Constructor | Use case |
+|---------|-------------|----------|
+| Environment variables | `NewSecretsManager()` | Default; twelve-factor apps |
+| Docker / Kubernetes | `NewDockerSecretsManager(path)` | Mounted secret files in containers |
+| Credentials file | `NewFileSecretsManager(file)` | Local development, CI runners |
+| Static (in-memory) | `NewStaticSecretsManager(map)` | Unit tests |
 
-```go
-manager := secrets.NewSecretsManager()
-value, err := manager.Obtain("DB_PASSWORD")
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Println(*value)
-```
-
-### Static secrets (e.g. for testing)
-
-```go
-manager := secrets.NewStaticSecretsManager(map[string]string{
-    "API_KEY": "supersecret",
-})
-value, _ := manager.Obtain("api_key") // case-insensitive
-```
-
-### Credentials file
-
-The file must contain one `key:base64encodedvalue` entry per line:
-
-```
-DB_PASSWORD:c3VwZXJzZWNyZXQ=
-API_KEY:bXlhcGlrZXk=
-```
-
-```go
-manager := secrets.NewFileSecretsManager("~/.credentials")
-value, err := manager.Obtain("DB_PASSWORD")
-```
-
-### Docker / Kubernetes mounted secrets
-
-```go
-manager := secrets.NewDockerSecretsManager("/run/secrets")
-value, err := manager.Obtain("db-password")
-```
-
-The default path `/run/secrets` is also available as the constant `secrets.DOCKER_SECRETS_PATH`.
-
-### Config-driven creation
-
-```go
-// config value secrets.source = "docker" creates a DockerSecretsManager,
-// everything else (or no value) falls back to the environment manager.
-manager := secrets.NewSecretsManagerByConfig(conf)
-```
-
-### Exporting secrets to environment variables
-
-```go
-secrets.ExportToEnvironment([]string{"DB_PASSWORD", "API_KEY"}, manager)
-```
-
-## Interface
+All backends implement the same interface:
 
 ```go
 type SecretsManager interface {
     Obtain(key string) (*string, error)
 }
 ```
+
+`Obtain` returns a pointer to the secret value, or a `*SecretNotFoundError` when the key does not exist.
+
+## Usage
+
+### Environment variables
+
+```go
+manager := secrets.NewSecretsManager()
+
+value, err := manager.Obtain("DATABASE_URL")
+if err != nil {
+    // handle *secrets.SecretNotFoundError
+}
+fmt.Println(*value)
+```
+
+Key lookup is case-insensitive: `Obtain("db_password")` also matches `DB_PASSWORD` and `Db_Password`.
+
+### Docker / Kubernetes mounted secrets
+
+```go
+// Use the default mount path /run/secrets
+manager := secrets.NewDockerSecretsManager(secrets.DOCKER_SECRETS_PATH)
+
+// Or a custom path
+manager = secrets.NewDockerSecretsManager("/var/run/secrets/myapp")
+
+value, err := manager.Obtain("db-password")
+```
+
+Each secret must be a separate file inside the secrets directory. The filename is the key. Key lookup is case-insensitive.
+
+### Credentials file
+
+```go
+// ~ is expanded to the current user's home directory
+manager := secrets.NewFileSecretsManager("~/.credentials")
+
+value, err := manager.Obtain("db_password")
+```
+
+**Credentials file format** — one entry per line, key and base64-encoded value separated by `:`:
+
+```
+db_password:cGFzc3dvcmQxMjM=
+api_key:c2VjcmV0a2V5eHl6
+```
+
+Encode a value:
+
+```bash
+echo -n "mysecretvalue" | base64
+```
+
+**Security requirements for the credentials file:**
+- Permissions must be `0600` or stricter (no group or world read/write/execute)
+- The path must not be a symlink
+
+### Static (for tests)
+
+```go
+manager := secrets.NewStaticSecretsManager(map[string]string{
+    "API_KEY": "test-key-123",
+    "DB_URL":  "postgres://localhost/testdb",
+})
+
+value, err := manager.Obtain("API_KEY")
+
+// Remove all secrets from memory when done
+manager.(*secrets.StaticSecretsManager).Clear()
+```
+
+### Export secrets to environment variables
+
+`ExportToEnvironment` loads a list of secrets by key and sets each one as an environment variable. Keys that cannot be found are silently skipped.
+
+```go
+manager := secrets.NewSecretsManager()
+secrets.ExportToEnvironment([]string{"API_KEY", "DB_PASSWORD"}, manager)
+```
+
+### Select backend from configuration
+
+The library integrates with [go-config](https://github.com/tommzn/go-config). Set `secrets.source` in your config file to select a backend:
+
+```yaml
+secrets:
+  source: docker
+  path: /run/secrets
+```
+
+```go
+conf, _ := config.NewFileConfigSource(&configFile).Load()
+manager := secrets.NewSecretsManagerByConfig(conf)
+```
+
+Supported values for `secrets.source`:
+
+| Value | Backend |
+|-------|---------|
+| `docker` | `DockerSecretsManager` using path from `secrets.path` (default: `/run/secrets`) |
+| _(absent)_ | `EnvironmentSecretsManager` |
+
+## Error handling
+
+```go
+value, err := manager.Obtain("MISSING_KEY")
+if err != nil {
+    var notFound *secrets.SecretNotFoundError
+    if errors.As(err, &notFound) {
+        // key does not exist in this backend
+    }
+}
+```
+
+## Security notes
+
+- **Credentials file**: rejected if it has group or world permissions, or if the path resolves to a symlink.
+- **Docker backend**: key names containing path separators (`/`, `\`) or traversal sequences (`.`, `..`) are rejected to prevent directory traversal attacks.
+- **Error messages**: secret key names are never included in error messages to avoid leaking them into logs.
+- **Base64 in credentials files** is encoding, not encryption. Protect the file with filesystem permissions and avoid committing it to version control.
+
+## License
+
+MIT

@@ -1,7 +1,6 @@
 package secrets
 
 import (
-	"log"
 	"os"
 	"strings"
 )
@@ -11,8 +10,6 @@ func ExportToEnvironment(keys []string, manager SecretsManager) {
 	for _, key := range keys {
 		if val, err := manager.Obtain(key); err == nil {
 			os.Setenv(key, *val)
-		} else {
-			log.Println(err)
 		}
 	}
 }
@@ -32,8 +29,8 @@ func generateSecretKeys(key string) []string {
 	return keys
 }
 
-// byteSliceAsStringPtr returns passed byte slice as string point.
-// If byte slice is empty nil will be retunred.
+// byteSliceAsStringPtr returns passed byte slice as string pointer.
+// If byte slice is empty nil will be returned.
 func byteSliceAsStringPtr(byteSlice []byte) *string {
 	if len(byteSlice) == 0 {
 		return nil
