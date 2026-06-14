@@ -7,6 +7,9 @@ on:
       - 'deps/**'
       - 'fix/**'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     uses: tommzn/github-ci/.github/workflows/go.test.v2.yml@v1.0.104

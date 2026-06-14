@@ -47,7 +47,7 @@ if err != nil {
 fmt.Println(*value)
 ```
 
-Key lookup is case-insensitive: `Obtain("db_password")` also matches `DB_PASSWORD` and `Db_Password`.
+Key lookup is case-insensitive: `Obtain("db_password")` also matches `DB_PASSWORD` and `Db_Password` (the environment manager tries the original key, lowercase, and uppercase variants).
 
 ### Docker / Kubernetes mounted secrets
 
@@ -61,7 +61,7 @@ manager = secrets.NewDockerSecretsManager("/var/run/secrets/myapp")
 value, err := manager.Obtain("db-password")
 ```
 
-Each secret must be a separate file inside the secrets directory. The filename is the key. Key lookup is case-insensitive.
+Each secret must be a separate file inside the secrets directory. The filename is the key. Key lookup is case-insensitive (the original key, lowercase, and uppercase variants are tried).
 
 ### Credentials file
 
@@ -86,8 +86,9 @@ echo -n "mysecretvalue" | base64
 ```
 
 **Security requirements for the credentials file:**
-- Permissions must be `0600` or stricter (no group or world read/write/execute)
+- Permissions must be `0600` or stricter (no group or world read/write/execute; owner must have read access)
 - The path must not be a symlink
+- Key lookup in credentials files is **case-sensitive** — the key in the file must match exactly.
 
 ### Static (for tests)
 

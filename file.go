@@ -29,8 +29,9 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return nil, fmt.Errorf("secret file must not be a symlink: %s", s.secretsFile)
 	}
-	if info.Mode().Perm()&0077 != 0 {
-		return nil, fmt.Errorf("secret file has insecure permissions %04o, expected 0600 or stricter", info.Mode().Perm())
+	perm := info.Mode().Perm()
+	if perm&0077 != 0 || perm&0400 == 0 {
+		return nil, fmt.Errorf("secret file has insecure permissions %04o, expected owner-read-only (e.g. 0600)", perm)
 	}
 
 	file, err := os.Open(s.secretsFile)

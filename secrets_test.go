@@ -72,7 +72,7 @@ func (suite *SecretsManagerTestSuite) TestEnvironmentSecretsManager() {
 
 func (suite *SecretsManagerTestSuite) TestDockerSecretsManager() {
 
-	secretsmanager := NewDockerecretsManager("./fixtures")
+	secretsmanager := NewDockerSecretsManager("./fixtures")
 	secret, err := secretsmanager.Obtain("TestSecret")
 	suite.Nil(err)
 	suite.NotNil(secret)
@@ -123,7 +123,7 @@ func (suite *SecretsManagerTestSuite) TestExportToEnvironmentMissingKey() {
 
 func (suite *SecretsManagerTestSuite) TestDockerSecretsManagerPathTraversal() {
 
-	manager := NewDockerecretsManager("./fixtures")
+	manager := NewDockerSecretsManager("./fixtures")
 
 	for _, key := range []string{"../secrets_test", ".", "..", "path/traversal", "back\\slash"} {
 		secret, err := manager.Obtain(key)
