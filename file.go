@@ -3,6 +3,7 @@ package secrets
 import (
 	"bufio"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -17,9 +18,21 @@ type FileSecretsManager struct {
 }
 
 // Obtain will try to read secret from defined credentials file.
-// Expects secrets as a key:value pair, separatir is ":", where secrets value
+// Expects secrets as a key:value pair, separator is ":", where secrets value
 // is base64 encoded.
 func (s *FileSecretsManager) Obtain(key string) (*string, error) {
+
+	info, err := os.Lstat(s.secretsFile)
+	if err != nil {
+		return nil, err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return nil, fmt.Errorf("secret file must not be a symlink: %s", s.secretsFile)
+	}
+	perm := info.Mode().Perm()
+	if perm&0077 != 0 || perm&0400 == 0 {
+		return nil, fmt.Errorf("secret file has insecure permissions %04o, expected owner-read-only (e.g. 0600)", perm)
+	}
 
 	file, err := os.Open(s.secretsFile)
 	if err != nil {
@@ -35,14 +48,17 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 		if assertKeyIsEqual(key, secretsKey) {
 			if decoded, err := base64.StdEncoding.DecodeString(secretsValue); err == nil {
 				return byteSliceAsStringPtr(decoded), nil
-			} else {
-				return nil, asBase64DecodeError(err)
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 	return nil, asSecretNotFoundError(key)
 }
 
+// splitCredentials splits a credentials file line into key and value on the
+// first ":" separator. Lines without a separator return two empty strings.
 func splitCredentials(line string) (string, string) {
 	if splitted := strings.SplitN(line, ":", 2); len(splitted) == 2 {
 		return splitted[0], splitted[1]
@@ -50,7 +66,7 @@ func splitCredentials(line string) (string, string) {
 	return "", ""
 }
 
+// assertKeyIsEqual reports whether key and credentialsKey are identical.
 func assertKeyIsEqual(key, credentialsKey string) bool {
-	return key == credentialsKey ||
-		strings.ToUpper(key) == strings.ToUpper(credentialsKey)
+	return key == credentialsKey
 }

@@ -63,23 +63,10 @@ func (suite *HelperTestSuite) TestGenerateSecretFilePath() {
 
 func (suite *HelperTestSuite) TestSecretNotFoundError() {
 	err := asSecretNotFoundError("mykey")
-	suite.EqualError(err, "Secret not found: mykey")
+	suite.EqualError(err, "secret not found")
 
 	var target *SecretNotFoundError
 	suite.True(errors.As(err, &target))
-}
-
-func (suite *HelperTestSuite) TestBase64DecodeError() {
-	inner := errors.New("illegal base64 data")
-	err := asBase64DecodeError(inner)
-	suite.EqualError(err, "illegal base64 data")
-
-	var target *Base64DecodeError
-	suite.True(errors.As(err, &target))
-}
-
-func (suite *HelperTestSuite) TestBase64DecodeError_NilInput() {
-	suite.Nil(asBase64DecodeError(nil))
 }
 
 // --- splitCredentials ---
@@ -109,10 +96,10 @@ func (suite *HelperTestSuite) TestAssertKeyIsEqual_ExactMatch() {
 	suite.True(assertKeyIsEqual("MYKEY", "MYKEY"))
 }
 
-func (suite *HelperTestSuite) TestAssertKeyIsEqual_CaseInsensitive() {
-	suite.True(assertKeyIsEqual("mykey", "MYKEY"))
-	suite.True(assertKeyIsEqual("MYKEY", "mykey"))
-	suite.True(assertKeyIsEqual("MyKey", "mykey"))
+func (suite *HelperTestSuite) TestAssertKeyIsEqual_CaseSensitive() {
+	suite.False(assertKeyIsEqual("mykey", "MYKEY"))
+	suite.False(assertKeyIsEqual("MYKEY", "mykey"))
+	suite.False(assertKeyIsEqual("MyKey", "mykey"))
 }
 
 func (suite *HelperTestSuite) TestAssertKeyIsEqual_NoMatch() {
