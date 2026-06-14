@@ -18,6 +18,7 @@ func TestFileSecretsManagerTestSuite(t *testing.T) {
 
 func (suite *FileSecretsManagerTestSuite) TestObtainSecrets() {
 
+	suite.Require().NoError(os.Chmod("fixtures/config/credentials", 0600))
 	secretsmanager := NewFileSecretsManager("fixtures/config/credentials")
 
 	secret1, err1 := secretsmanager.Obtain("secrets_key")

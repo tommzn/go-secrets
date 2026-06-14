@@ -19,7 +19,7 @@ go get github.com/tommzn/go-secrets
 | Backend | Constructor | Use case |
 |---------|-------------|----------|
 | Environment variables | `NewSecretsManager()` | Default; twelve-factor apps |
-| Docker / Kubernetes | `NewDockerecretsManager(path)` | Mounted secret files in containers |
+| Docker / Kubernetes | `NewDockerSecretsManager(path)` | Mounted secret files in containers |
 | Credentials file | `NewFileSecretsManager(file)` | Local development, CI runners |
 | Static (in-memory) | `NewStaticSecretsManager(map)` | Unit tests |
 
@@ -53,10 +53,10 @@ Key lookup is case-insensitive: `Obtain("db_password")` also matches `DB_PASSWOR
 
 ```go
 // Use the default mount path /run/secrets
-manager := secrets.NewDockerecretsManager(secrets.DOCKER_SECRETS_PATH)
+manager := secrets.NewDockerSecretsManager(secrets.DOCKER_SECRETS_PATH)
 
 // Or a custom path
-manager = secrets.NewDockerecretsManager("/var/run/secrets/myapp")
+manager = secrets.NewDockerSecretsManager("/var/run/secrets/myapp")
 
 value, err := manager.Obtain("db-password")
 ```

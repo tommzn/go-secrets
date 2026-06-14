@@ -4,10 +4,12 @@ on:
     branches:
       - main
       - 'features/**'
+      - 'copilot/**'
       - 'dependabot/**'
   pull_request:
     branches:
       - 'features/**'
+      - 'copilot/**'
       - 'dependabot/**'
 
 permissions:

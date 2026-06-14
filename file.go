@@ -59,7 +59,7 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 // splitCredentials splits a credentials file line into key and value on the
 // first ":" separator. Lines without a separator return two empty strings.
 func splitCredentials(line string) (string, string) {
-	if splitted := strings.Split(line, ":"); len(splitted) >= 2 {
+	if splitted := strings.SplitN(line, ":", 2); len(splitted) == 2 {
 		return splitted[0], splitted[1]
 	}
 	return "", ""
