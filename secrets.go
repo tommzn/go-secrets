@@ -22,9 +22,16 @@ func NewFileSecretsManager(fileName string) SecretsManager {
 	}
 }
 
-// NewDockerecretsManager returns a new secrets manager for Docker or K8s.
-func NewDockerecretsManager(secretsPath string) SecretsManager {
+// NewDockerSecretsManager returns a new secrets manager for Docker or K8s.
+func NewDockerSecretsManager(secretsPath string) SecretsManager {
 	return &DockerSecretsManager{secretsPath: secretsPath}
+}
+
+// NewDockerecretsManager is deprecated: use NewDockerSecretsManager instead.
+//
+// Deprecated: Use NewDockerSecretsManager.
+func NewDockerecretsManager(secretsPath string) SecretsManager {
+	return NewDockerSecretsManager(secretsPath)
 }
 
 // NewSecretsManagerByConfig will create a new secrets manager by given config.
@@ -34,7 +41,7 @@ func NewSecretsManagerByConfig(conf config.Config) SecretsManager {
 	if managerType := conf.Get("secrets.source", nil); managerType != nil {
 		if *managerType == "docker" {
 			secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
-			return NewDockerecretsManager(*secretsPath)
+			return NewDockerSecretsManager(*secretsPath)
 		}
 	}
 	return NewSecretsManager()

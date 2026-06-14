@@ -36,7 +36,7 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 			if decoded, err := base64.StdEncoding.DecodeString(secretsValue); err == nil {
 				return byteSliceAsStringPtr(decoded), nil
 			} else {
-				return nil, asBase64DecodeErrorr(err)
+				return nil, asBase64DecodeError(err)
 			}
 		}
 	}
@@ -44,7 +44,7 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 }
 
 func splitCredentials(line string) (string, string) {
-	if splitted := strings.Split(line, ":"); len(splitted) >= 2 {
+	if splitted := strings.SplitN(line, ":", 2); len(splitted) == 2 {
 		return splitted[0], splitted[1]
 	}
 	return "", ""
