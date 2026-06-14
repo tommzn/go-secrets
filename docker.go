@@ -2,7 +2,7 @@ package secrets
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 // DOCKER_SECRETS_PATH defined the default path to look for mounted secrets in Docker or K8s.
@@ -13,13 +13,13 @@ type DockerSecretsManager struct {
 	secretsPath string
 }
 
-// Obtain will try to read secrets from mountes secrets files.
+// Obtain will try to read secrets from mounted secrets files.
 func (s *DockerSecretsManager) Obtain(key string) (*string, error) {
 
 	keys := generateSecretKeys(key)
 	for _, currentKey := range keys {
 		fullPath := generateSecretFilePath(s.secretsPath, currentKey)
-		if secret, err := ioutil.ReadFile(fullPath); err == nil {
+		if secret, err := os.ReadFile(fullPath); err == nil {
 			secretStr := string(secret)
 			return &secretStr, nil
 		}
