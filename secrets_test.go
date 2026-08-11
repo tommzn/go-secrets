@@ -57,7 +57,7 @@ func (suite *SecretsManagerTestSuite) TestEnvironmentSecretsManager() {
 
 	expectedSecret := "xxx123"
 	key := "Test_Secret"
-	os.Setenv(key, expectedSecret)
+	suite.T().Setenv(key, expectedSecret)
 	secretsmanager := NewSecretsManager()
 
 	secret, err := secretsmanager.Obtain(key)
