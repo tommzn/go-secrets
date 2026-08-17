@@ -48,17 +48,16 @@ func (suite *FileSecretsManagerTestSuite) TestWithMissingFile() {
 
 func (suite *FileSecretsManagerTestSuite) TestSymlinkRejection() {
 
-	// Create a valid credentials file
-	tmpFile, err := os.CreateTemp("", "credentials-*")
+	// Create a valid credentials file inside a temp dir (auto-cleaned by t.TempDir).
+	dir := suite.T().TempDir()
+	tmpFile, err := os.CreateTemp(dir, "credentials-*")
 	suite.Require().NoError(err)
-	defer os.Remove(tmpFile.Name())
 	tmpFile.Close()
 	os.Chmod(tmpFile.Name(), 0600)
 
-	// Point a symlink at it
+	// Point a symlink at it inside the same temp dir.
 	symlinkPath := tmpFile.Name() + ".link"
 	suite.Require().NoError(os.Symlink(tmpFile.Name(), symlinkPath))
-	defer os.Remove(symlinkPath)
 
 	secretsmanager := NewFileSecretsManager(symlinkPath)
 	secret, err := secretsmanager.Obtain("anykey")
@@ -69,9 +68,9 @@ func (suite *FileSecretsManagerTestSuite) TestSymlinkRejection() {
 
 func (suite *FileSecretsManagerTestSuite) TestInsecurePermissions() {
 
-	tmpFile, err := os.CreateTemp("", "credentials-*")
+	dir := suite.T().TempDir()
+	tmpFile, err := os.CreateTemp(dir, "credentials-*")
 	suite.Require().NoError(err)
-	defer os.Remove(tmpFile.Name())
 	tmpFile.Close()
 	os.Chmod(tmpFile.Name(), 0644)
 
