@@ -52,8 +52,8 @@ func (suite *FileSecretsManagerTestSuite) TestSymlinkRejection() {
 	dir := suite.T().TempDir()
 	tmpFile, err := os.CreateTemp(dir, "credentials-*")
 	suite.Require().NoError(err)
-	tmpFile.Close()
-	os.Chmod(tmpFile.Name(), 0600)
+	suite.Require().NoError(tmpFile.Close())
+	suite.Require().NoError(os.Chmod(tmpFile.Name(), 0600))
 
 	// Point a symlink at it inside the same temp dir.
 	symlinkPath := tmpFile.Name() + ".link"
@@ -71,8 +71,8 @@ func (suite *FileSecretsManagerTestSuite) TestInsecurePermissions() {
 	dir := suite.T().TempDir()
 	tmpFile, err := os.CreateTemp(dir, "credentials-*")
 	suite.Require().NoError(err)
-	tmpFile.Close()
-	os.Chmod(tmpFile.Name(), 0644)
+	suite.Require().NoError(tmpFile.Close())
+	suite.Require().NoError(os.Chmod(tmpFile.Name(), 0644))
 
 	secretsmanager := NewFileSecretsManager(tmpFile.Name())
 	secret, err := secretsmanager.Obtain("anykey")
