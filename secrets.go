@@ -42,13 +42,6 @@ func NewDockerSecretsManager(secretsPath string) SecretsManager {
 	return &DockerSecretsManager{secretsPath: secretsPath}
 }
 
-// NewDockerecretsManager is deprecated: use NewDockerSecretsManager instead.
-//
-// Deprecated: Use NewDockerSecretsManager.
-func NewDockerecretsManager(secretsPath string) SecretsManager {
-	return NewDockerSecretsManager(secretsPath)
-}
-
 // NewSecretsManagerByConfig will create a new secrets manager by given config.
 // If there's no config values for secrets, a default secrets manager will be returned.
 func NewSecretsManagerByConfig(conf config.Config) SecretsManager {

@@ -46,9 +46,11 @@ func (s *FileSecretsManager) Obtain(key string) (*string, error) {
 		line := scanner.Text()
 		secretsKey, secretsValue := splitCredentials(line)
 		if assertKeyIsEqual(key, secretsKey) {
-			if decoded, err := base64.StdEncoding.DecodeString(secretsValue); err == nil {
-				return byteSliceAsStringPtr(decoded), nil
+			decoded, err := base64.StdEncoding.DecodeString(secretsValue)
+			if err != nil {
+				return nil, fmt.Errorf("secret %q: invalid base64 value: %w", key, err)
 			}
+			return byteSliceAsStringPtr(decoded), nil
 		}
 	}
 	if err := scanner.Err(); err != nil {

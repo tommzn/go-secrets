@@ -114,9 +114,8 @@ func (suite *SecretsManagerTestSuite) TestStaticSecretsManagerClear() {
 func (suite *SecretsManagerTestSuite) TestExportToEnvironmentMissingKey() {
 
 	manager := NewStaticSecretsManager(map[string]string{})
-	suite.NotPanics(func() {
-		ExportToEnvironment([]string{"MISSING_KEY_XYZ_99"}, manager)
-	})
+	failed := ExportToEnvironment([]string{"MISSING_KEY_XYZ_99"}, manager)
+	suite.Equal([]string{"MISSING_KEY_XYZ_99"}, failed)
 	_, ok := os.LookupEnv("MISSING_KEY_XYZ_99")
 	suite.False(ok)
 }
@@ -170,7 +169,7 @@ func (suite *SecretsManagerTestSuite) TestIsValidSecretFileName() {
 func (suite *SecretsManagerTestSuite) TestSecretNotFoundError() {
 
 	err := asSecretNotFoundError("somekey")
-	suite.Equal("secret not found", err.Error())
+	suite.Equal(`secret not found: "somekey"`, err.Error())
 	suite.IsType(&SecretNotFoundError{}, err)
 }
 

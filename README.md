@@ -106,11 +106,14 @@ manager.(*secrets.StaticSecretsManager).Clear()
 
 ### Export secrets to environment variables
 
-`ExportToEnvironment` loads a list of secrets by key and sets each one as an environment variable. Keys that cannot be found are silently skipped.
+`ExportToEnvironment` loads a list of secrets by key and sets each one as an environment variable. It returns the keys that could not be looked up or set, so callers can decide whether a missing secret is fatal.
 
 ```go
 manager := secrets.NewSecretsManager()
-secrets.ExportToEnvironment([]string{"API_KEY", "DB_PASSWORD"}, manager)
+failed := secrets.ExportToEnvironment([]string{"API_KEY", "DB_PASSWORD"}, manager)
+if len(failed) > 0 {
+    // handle missing secrets, e.g. log.Fatal or fall back to defaults
+}
 ```
 
 ### Select backend from configuration
