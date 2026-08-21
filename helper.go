@@ -6,12 +6,17 @@ import (
 )
 
 // ExportToEnvironment will export secrets identified by given keys to environment variables.
-func ExportToEnvironment(keys []string, manager SecretsManager) {
+// It returns a slice of keys for which the lookup failed.
+func ExportToEnvironment(keys []string, manager SecretsManager) []string {
+	var failed []string
 	for _, key := range keys {
 		if val, err := manager.Obtain(key); err == nil {
 			os.Setenv(key, *val)
+		} else {
+			failed = append(failed, key)
 		}
 	}
+	return failed
 }
 
 // generateSecretKeys will create a slice of keys. This includes the passed key and a lower and upper case version of it.

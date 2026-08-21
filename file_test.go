@@ -31,10 +31,11 @@ func (suite *FileSecretsManagerTestSuite) TestObtainSecrets() {
 	suite.Nil(secret2)
 
 	// value for AWS_SECRET_ACCESS_KEY contains a space suffix which causes base64 decode to fail;
-	// the entry is skipped and secret not found is returned.
+	// the key is found but the decode error is returned immediately.
 	secret3, err3 := secretsmanager.Obtain("AWS_SECRET_ACCESS_KEY")
 	suite.NotNil(err3)
-	suite.IsType(&SecretNotFoundError{}, err3)
+	suite.NotErrorIs(err3, &SecretNotFoundError{})
+	suite.Contains(err3.Error(), "invalid base64")
 	suite.Nil(secret3)
 }
 

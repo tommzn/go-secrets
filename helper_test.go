@@ -63,10 +63,11 @@ func (suite *HelperTestSuite) TestGenerateSecretFilePath() {
 
 func (suite *HelperTestSuite) TestSecretNotFoundError() {
 	err := asSecretNotFoundError("mykey")
-	suite.EqualError(err, "secret not found")
+	suite.EqualError(err, `secret not found: "mykey"`)
 
 	var target *SecretNotFoundError
 	suite.True(errors.As(err, &target))
+	suite.Equal("mykey", target.Key())
 }
 
 // --- splitCredentials ---
@@ -112,8 +113,14 @@ func (suite *HelperTestSuite) TestExportToEnvironmentMissingKey() {
 	secrets := map[string]string{"PRESENT": "value"}
 	manager := NewStaticSecretsManager(secrets)
 
-	// "MISSING" is not in the map; ExportToEnvironment should log the error without panicking.
-	suite.NotPanics(func() {
-		ExportToEnvironment([]string{"MISSING"}, manager)
-	})
+	failed := ExportToEnvironment([]string{"MISSING"}, manager)
+	suite.Equal([]string{"MISSING"}, failed)
+}
+
+func (suite *HelperTestSuite) TestExportToEnvironmentAllPresent() {
+	secrets := map[string]string{"KEY1": "val1", "KEY2": "val2"}
+	manager := NewStaticSecretsManager(secrets)
+
+	failed := ExportToEnvironment([]string{"KEY1", "KEY2"}, manager)
+	suite.Empty(failed)
 }

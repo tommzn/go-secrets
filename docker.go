@@ -24,7 +24,7 @@ func (s *DockerSecretsManager) Obtain(key string) (*string, error) {
 		}
 		fullPath := generateSecretFilePath(s.secretsPath, currentKey)
 		if secret, err := os.ReadFile(fullPath); err == nil {
-			secretStr := string(secret)
+			secretStr := strings.TrimRight(string(secret), "\r\n")
 			return &secretStr, nil
 		}
 	}
