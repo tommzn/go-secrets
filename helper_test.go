@@ -124,3 +124,14 @@ func (suite *HelperTestSuite) TestExportToEnvironmentAllPresent() {
 	failed := ExportToEnvironment([]string{"KEY1", "KEY2"}, manager)
 	suite.Empty(failed)
 }
+
+func (suite *HelperTestSuite) TestExportToEnvironmentSetenvFailure() {
+	// "=" is not a valid character in an environment variable name; os.Setenv
+	// rejects it, which should surface as a failed key even though the lookup succeeded.
+	invalidKey := "INVALID=KEY"
+	secrets := map[string]string{invalidKey: "value"}
+	manager := NewStaticSecretsManager(secrets)
+
+	failed := ExportToEnvironment([]string{invalidKey}, manager)
+	suite.Equal([]string{invalidKey}, failed)
+}

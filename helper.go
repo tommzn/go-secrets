@@ -6,13 +6,16 @@ import (
 )
 
 // ExportToEnvironment will export secrets identified by given keys to environment variables.
-// It returns a slice of keys for which the lookup failed.
+// It returns a slice of keys for which the lookup or the environment assignment failed.
 func ExportToEnvironment(keys []string, manager SecretsManager) []string {
 	var failed []string
 	for _, key := range keys {
-		if val, err := manager.Obtain(key); err == nil {
-			os.Setenv(key, *val)
-		} else {
+		val, err := manager.Obtain(key)
+		if err != nil {
+			failed = append(failed, key)
+			continue
+		}
+		if err := os.Setenv(key, *val); err != nil {
 			failed = append(failed, key)
 		}
 	}

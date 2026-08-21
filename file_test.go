@@ -1,6 +1,7 @@
 package secrets
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -34,7 +35,8 @@ func (suite *FileSecretsManagerTestSuite) TestObtainSecrets() {
 	// the key is found but the decode error is returned immediately.
 	secret3, err3 := secretsmanager.Obtain("AWS_SECRET_ACCESS_KEY")
 	suite.NotNil(err3)
-	suite.NotErrorIs(err3, &SecretNotFoundError{})
+	var notFound *SecretNotFoundError
+	suite.False(errors.As(err3, &notFound))
 	suite.Contains(err3.Error(), "invalid base64")
 	suite.Nil(secret3)
 }
