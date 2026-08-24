@@ -31,6 +31,17 @@ func (suite *SecretsManagerTestSuite) TestNewManagerFromConfig() {
 	suite.IsType(&EnvironmentSecretsManager{}, manager3)
 }
 
+func (suite *SecretsManagerTestSuite) TestNewManagerFromConfigDockerDefaultPath() {
+
+	// When secrets.source is "docker" but secrets.path is absent from the
+	// config, NewSecretsManagerByConfig must fall back to DOCKER_SECRETS_PATH
+	// without panicking.
+	conf := suite.loadConfigForTest("fixtures/config/docker_no_path_secrets.yml")
+	manager := NewSecretsManagerByConfig(conf)
+	suite.IsType(&DockerSecretsManager{}, manager)
+	suite.Equal(DOCKER_SECRETS_PATH, manager.(*DockerSecretsManager).secretsPath)
+}
+
 func (suite *SecretsManagerTestSuite) TestStaticSecretsManager() {
 
 	secrets := make(map[string]string)

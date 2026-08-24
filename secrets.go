@@ -51,7 +51,10 @@ func NewSecretsManagerByConfig(conf config.Config) SecretsManager {
 	if managerType == nil || *managerType != "docker" {
 		return NewSecretsManager()
 	}
-	// Get always returns the non-nil default here, so no nil-check is needed.
 	secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
+	if secretsPath == nil {
+		// conf.Get may return nil if the key is present but explicitly null in config.
+		secretsPath = config.AsStringPtr(DOCKER_SECRETS_PATH)
+	}
 	return NewDockerSecretsManager(*secretsPath)
 }
