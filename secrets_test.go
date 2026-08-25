@@ -38,7 +38,7 @@ func (suite *SecretsManagerTestSuite) TestNewManagerFromConfigDockerDefaultPath(
 	// without panicking.
 	conf := suite.loadConfigForTest("fixtures/config/docker_no_path_secrets.yml")
 	manager := NewSecretsManagerByConfig(conf)
-	suite.IsType(&DockerSecretsManager{}, manager)
+	suite.Require().IsType(&DockerSecretsManager{}, manager)
 	suite.Equal(DOCKER_SECRETS_PATH, manager.(*DockerSecretsManager).secretsPath)
 }
 
