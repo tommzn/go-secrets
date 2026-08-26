@@ -42,18 +42,19 @@ func NewDockerSecretsManager(secretsPath string) SecretsManager {
 	return &DockerSecretsManager{secretsPath: secretsPath}
 }
 
-// NewSecretsManagerByConfig will create a new secrets manager by given config.
-// If there's no config values for secrets, a default secrets manager will be returned.
+// NewSecretsManagerByConfig will create a new secrets manager based on the
+// given config. If there are no config values for secrets, the default
+// (environment-based) secrets manager is returned.
 func NewSecretsManagerByConfig(conf config.Config) SecretsManager {
 
-	if managerType := conf.Get("secrets.source", nil); managerType != nil {
-		if *managerType == "docker" {
-			secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
-			if secretsPath == nil {
-				return NewDockerSecretsManager(DOCKER_SECRETS_PATH)
-			}
-			return NewDockerSecretsManager(*secretsPath)
-		}
+	managerType := conf.Get("secrets.source", nil)
+	if managerType == nil || *managerType != "docker" {
+		return NewSecretsManager()
 	}
-	return NewSecretsManager()
+	secretsPath := conf.Get("secrets.path", config.AsStringPtr(DOCKER_SECRETS_PATH))
+	if secretsPath == nil {
+		// conf.Get may return nil if the key is present but explicitly null in config.
+		secretsPath = config.AsStringPtr(DOCKER_SECRETS_PATH)
+	}
+	return NewDockerSecretsManager(*secretsPath)
 }
